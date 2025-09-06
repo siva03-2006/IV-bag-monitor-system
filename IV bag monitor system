@@ -1,0 +1,42 @@
+To monitor the fluid level in an IV (intravenous) bag in real-time and provide alerts (sound or digital) when the fluid reaches a critical low level to prevent backflow and ensure timely replacement by medical staff.
+#include "HX711.h"
+
+// HX711 circuit wiring
+#define DT  A1  // Data pin
+#define SCK A0  // Clock pin
+
+HX711 scale;
+
+const int buzzerPin = 9;
+float thresholdWeight = 100.0; // in grams
+float calibration_factor = -7050.0; // Calibration factor, needs to be adjusted
+
+void setup() {
+  Serial.begin(9600);
+  scale.begin(DT, SCK);
+  scale.set_scale(calibration_factor); 
+  scale.tare(); // Reset scale to 0
+
+  pinMode(buzzerPin, OUTPUT);
+  digitalWrite(buzzerPin, LOW);
+
+  Serial.println("IV Bag Monitoring System Initialized...");
+}
+
+void loop() {
+  float weight = scale.get_units();
+  Serial.print("Weight: ");
+  Serial.print(weight);
+  Serial.println(" g");
+
+  if (weight < thresholdWeight) {
+    Serial.println("ALERT: IV Bag is Low!");
+    digitalWrite(buzzerPin, HIGH);
+    delay(1000);
+    digitalWrite(buzzerPin, LOW);
+  } else {
+    digitalWrite(buzzerPin, LOW);
+  }
+
+  delay(1000); // Read every 1 second
+}
